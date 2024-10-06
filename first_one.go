@@ -1,58 +1,60 @@
-// Assigning a function to a variable
 package main
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
 )
 
-type kelvin float64
-type sensor func() kelvin
-
-func fakeSensor() kelvin {
-	return kelvin(rand.Intn(151) + 150)
-}
-
-func realSensor() kelvin {
-	return 0
-}
-
-func measureTemperature(samples int, sensor sensor) {
-	for i := 0; i < samples; i++ {
-		fmt.Println(sensor())
-		time.Sleep(time.Second)
-	}
-}	
-
-// anonymous functions or function literals
-var min = func(a, b int) int {
-	if a >= b {
-		return a
-	} else {
-		return b
-	}
-}
-
-func calibrate(s sensor, offset kelvin) sensor {
-	return func() kelvin {
-		return s() + offset
+func random(a [5]string) {
+	for i, j := range a {
+		fmt.Println(i, j)
 	}
 }
 
 func main() {
-	rfunc := calibrate(realSensor, 5)
-	// rfunc keeps reference to the realSensor function and the offset value
-	measureTemperature(3, rfunc)
+	var planets [8]string
+	planets[0] = "mercury"
+	planets[1] = "venus"
+	planets[2] = "earth"
 
-	fmt.Println("-----------")
+	fmt.Println(planets[2])
+	fmt.Println(len(planets))
+	fmt.Println(planets[3] == "") // initialized with zero values
 
-	var k kelvin = 294
-	sensor := func() kelvin {
-		return k
+	// composite literals
+	names := [5]string{"madhu", "somename", "othername", "even", "odd"}
+	for i := 0; i < len(names); i++ {
+		// fmt.Println(names[i])
 	}
 
-	fmt.Println(sensor())
-	k++
-	fmt.Println(sensor()) // sensor keeps reference to the k variable
+	planets2 := [...]string{ 
+		"Mercury",
+		"Venus",
+		"Earth",
+		"Mars",
+		"Jupiter",
+		"Saturn",
+		"Uranus",
+		"Neptune",// last comma is required
+	} 
+	fmt.Println(len(planets2))
+	
+	random(names, // comma required
+	)
+
+	// random(planets) // error, size doesn't match
+
+	// 2d arrays
+	var nums [2][2]int
+	for i := range nums[0] {
+		nums[0][i] = 5
+	}
+
+	for i := range nums {
+		for j := range nums[i] {
+			fmt.Print(nums[i][j], " ")
+		}
+		fmt.Println()
+	}
+
+
 }
