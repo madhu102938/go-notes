@@ -4,6 +4,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
 
 type kelvin float64
@@ -16,10 +17,15 @@ func realSensor() kelvin {
 	return 0
 }
 
-func main() {
-	var sensor func() kelvin = fakeSensor
-	fmt.Println(sensor())
+func measureTemperature(samples int, sensor func() kelvin) {
+	for i := 0; i < samples; i++ {
+		fmt.Println(sensor())
+		time.Sleep(time.Second)
+	}
+}
 
-	sensor = realSensor
-	fmt.Println(sensor())
+func main() {
+	measureTemperature(3, fakeSensor)
+	fmt.Println("-----------------")
+	measureTemperature(3, realSensor)
 }
