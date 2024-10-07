@@ -1,37 +1,50 @@
+/*
+ Experiment: terraform.go
+ Write a program to terraform a slice of strings by prepending each planet with "New ".
+Use your program to terraform Mars, Uranus, and Neptune.
+ Your first iteration can use a terraform function, but your final implementation should
+introduce a Planets type with a terraform method, similar to sort.StringSlice.
+*/
+
 package main
 
-import (
-	"fmt"
-	"strings"
-	"sort"
-)
+import "fmt"
 
-func changingSlice(names []string) {
-	for i, name := range names {
-		if name == "Pluto" {
-			names[i] = "Hehe smol rock"
+type Planets []string
+
+func (p Planets) terraform() {
+	for i := range p {
+		switch p[i] {
+		case "Mars", "Uranus", "Neptune":
+			p[i] = "New " + p[i]
+		}
+	}
+}
+
+func terraform(planets []string) {
+	for i := range planets {
+		switch planets[i] {
+		case "Mars", "Uranus", "Neptune":
+			planets[i] = "New " + planets[i]
 		}
 	}
 }
 
 func main() {
-	// initializing a slice
-	names := []string{" Ceres  ", "Pluto", " Haumea ", " Makemake ", " Eris "}
-
-	fmt.Println(names)
-	changingSlice(names)
-	fmt.Println(names)
-
-	// trim and join
-	for i := range(names) {
-		names[i] = strings.Trim(names[i], " ")
+	planets := []string{
+		"Mercury",
+		"Venus",
+		"Earth",
+		"Mars",
+		"Jupiter",
+		"Saturn",
+		"Uranus",
+		"Neptune",
 	}
-	fmt.Println(strings.Join(names, ","))
 
-	sort.StringSlice(names).Sort()
-	// 1. converting to StringSlice (provided by the sort package)
-	// 2. sorting the slice by called the Sort() method on StringSlice type
+	fmt.Println(planets)
+	// terraform(planets)
+	Planets(planets).terraform()
+	fmt.Println(planets)
 
-	fmt.Println(names)
-	fmt.Printf("%T\n", names) // []string
 }
