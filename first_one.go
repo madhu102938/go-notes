@@ -2,48 +2,36 @@ package main
 
 import (
 	"fmt"
+	"strings"
+	"sort"
 )
 
-func main() {
-	planets := [...]string{
-		"Mercury",
-		"Venus",
-		"Earth",
-		"Mars",
-		"Jupiter",
-		"Saturn",
-		"Uranus",
-		"Neptune",
+func changingSlice(names []string) {
+	for i, name := range names {
+		if name == "Pluto" {
+			names[i] = "Hehe smol rock"
+		}
 	}
+}
 
-	terra := planets[:4]
-	gasGaint := planets[4:6]
-	iceGaint := planets[6:]
-	myPlanet := terra[2:3]
-
-	
-	fmt.Println(planets)
-	fmt.Println(terra, gasGaint, iceGaint)
-	fmt.Println(myPlanet)
-
-	myPlanet[0] = "Blue-chan"
-
-	fmt.Println(planets)
-	fmt.Println(terra, gasGaint, iceGaint)
-	fmt.Println(myPlanet)
-
-	parentString := "full string"
-	subString := parentString[5:]
-
-	fmt.Println(parentString,",", subString)
-
-	subString = "another string"
-	fmt.Println(parentString,",", subString)
-
-	fmt.Printf("this of type %T\n", planets) // array
-	fmt.Printf("this of type %T\n", gasGaint) // slice
-
+func main() {
 	// initializing a slice
-	names := []string{"Ceres", "Pluto", "Haumea", "Makemake", "Eris"}
-	fmt.Printf("%T, %T\n", names, planets)
+	names := []string{" Ceres  ", "Pluto", " Haumea ", " Makemake ", " Eris "}
+
+	fmt.Println(names)
+	changingSlice(names)
+	fmt.Println(names)
+
+	// trim and join
+	for i := range(names) {
+		names[i] = strings.Trim(names[i], " ")
+	}
+	fmt.Println(strings.Join(names, ","))
+
+	sort.StringSlice(names).Sort()
+	// 1. converting to StringSlice (provided by the sort package)
+	// 2. sorting the slice by called the Sort() method on StringSlice type
+
+	fmt.Println(names)
+	fmt.Printf("%T\n", names) // []string
 }
