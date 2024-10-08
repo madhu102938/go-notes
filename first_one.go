@@ -1,65 +1,84 @@
+// Structs, Json
 package main
 
 import (
+	"encoding/json"
 	"fmt"
-	"math"
+	"os"
 )
 
 func main() {
-	var mp map[string]int	// map[key type]value type
-	fmt.Println(mp["name"])	// keys which don't exist are initialized with zero values
-
-	mp1 := map[string]int{
-		"Earth" : 16,
-		"Venus" : 464,
+	var first struct {
+		one int
+		two int	// remember no commas,
 	}
-	fmt.Println(mp1)
+	
+	first.one, first.two = 1, 2
+	fmt.Printf("%v\n", first)
+	fmt.Printf("%+v\n", first) // focus on that +
 
-	// Checkiing if a key actually exists in the map
-	if val, ok := mp["Mercury"]; ok {
-		fmt.Printf("%d Value exists", val)
+	// Reusing structures with types
+	type location struct{
+		x int
+		y int
+	}
+
+	var second location
+	second.x, second.y = 3, 4
+
+	// Initializing structures with composite literals
+	third := location{x:5} // way 1
+	// undeclared attributes are defaulted to their zero values
+
+	forth := location{7, 8} // way 2
+	// will not work if all attributes are not declared
+
+	fmt.Println(third, forth)
+
+	fifth := forth
+	fifth.x = 5
+	fmt.Println(forth, fifth) // structures are copied (pass by value)
+
+	sliceStruct := []location{
+		{x:1, y:2},
+		{x:2, y:3},
+		{x:3, y:4},
+	}
+
+	fmt.Println(sliceStruct)
+
+	type coord struct {
+		Lat float64
+		Long float64
+	}
+	sixth := coord{2.23, 54.3}
+	
+	bytes, e := json.Marshal(sixth)
+	
+	if e != nil {
+		os.Exit(1)
 	} else {
-		fmt.Println("Value doesn't exist")
+		fmt.Println(string(bytes))
 	}
+	/*
+	As we know that only those with capital letters are exported, so if 
+	attributes of struct were lower case, they would not be exported,
+	but this would restrict our naming conventions, so we can use tags
+	to change the name of the attribute in the json file
+	*/
 
-	slice1 := []int{1}
-	slice2 := slice1
-	slice2[0] = 2
-	fmt.Println(slice1, slice2) // slices are passed by references
+	type coord2 struct {
+		Lat float64 `json:"latitude"`
+		Long float64 `json:"longitude"`
+	} // `json:"latitude" xml:"latitude"` for more than one format
 
-	mp2 := mp1
-	fmt.Println(mp1["Earth"])
-	mp1["Earth"] = 20
-	fmt.Println(mp2["Earth"]) // maps also share are same underlying data
+	seventh := coord2{34.24, 89.23}
 
-	// deleting elements from the map
-	delete(mp1, "Venus")
-	fmt.Println(mp1)
+	bytes, e = json.Marshal(seventh)
 
-	// printing map using for loop
-	for key, value := range mp1 {
-		fmt.Println(key, value)
+	if e != nil {
+		os.Exit(1)
+	} else {
+		fmt.Println(string(bytes))
 	}
-
-	//  Instead of determining the frequency of temperatures, 
-	// let’s group temperatures together in divisions of 10 each
-	temperatures := []float64{
-		-28.0, 32.0, -31.0, -29.0, -23.0, -29.0, -28.0, -33.0,
-	}
-	groups := map[float64][]float64{}
-	for _, temps := range temperatures {
-		division := math.Trunc(temps / 10.0) * 10
-		groups[division] = append(groups[division], temps)
-	}
-	fmt.Println(groups)
-
-
-	// using maps for set
-	arr := []int{1,1,2,2,3,3,3}
-	set := make(map[int]bool)
-	for _, i := range(arr) {
-		set[i] = true
-	}
-
-	fmt.Println(set[1], set[0])
 }
