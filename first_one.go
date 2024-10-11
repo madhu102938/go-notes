@@ -1,100 +1,83 @@
-// composition and forwarding
-// composition : a structure can have a field that is another structure
-// forwarding : a method of a structure can call a method of another structure
+// Interfaces
 
 package main
 
-import "fmt"
+import (
+	"encoding/json"
+	"fmt"
+	"strings"
+)
 
-type report0 struct {
-	sol int
-	high, low int
-	lat, long int
-} // this is not very good, instead we can make a structure of structures
+type martial struct {}
+type laser int
 
-type celsius float64
-
-type temperature struct {
-	high, low celsius
+func (l laser)	talk() string {
+	return strings.Repeat("pew ", int(l))
 }
 
-type location struct {
-	lat, long float64
+func (m martial) talk() string {
+	return "nack nack"
 }
 
-type report1 struct {
-	sol int
-	temperature temperature
-	location location
+// types for reusability
+type talker interface {
+	talk() string
 }
 
-// a method of temperatures
-func (t temperature) average() celsius {
-	return (t.high + t.low) / 2.0
+// an interface is satisfied if the type implements the necessary methods
+// else we will get compile time errors
+func shout(t talker) { 
+	fmt.Println(strings.ToUpper(t.talk()))
 }
 
-// updated report accounting for method forwarding
-type report struct {
-	sol int
-	temperature // automatically named temperature
-	location // automatically named
+// Stringer interface, need to implement the String() method
+func (m martial) String() string {
+	return fmt.Sprintf("nack nack from stringer interface")
 }
 
-// we forward all types methods, not just the ones for a structure
-type sol int
-type report2 struct {
-	sol
-	temperature
-	location
-}
-
-// a method for sol
-func (s sol) days() int {
-	return 1
-}
-
-// a method for location
-func (l location) days() int {
-	return 2
-}
-
-// resolving the name conflict
-func (r report2) days() int {
-	return r.sol.days()
+// Marshaler interface, need to implement the MarshalJSON() method
+// func (m martial) MarshalJSON() ([]byte, error)
+func (m martial) MarshalJSON() ([]byte, error) {
+	str := `"knock knock"` // if not enclosed in `` then getting error T_T
+	ans := []byte(str)
+	fmt.Println(ans)
+	return ans, nil
 }
 
 func main() {
-	loc1 := location{-4.5895, 137.4417}
-	t1 := temperature{high:-1.0, low:-78.0}
-	repo1 := report1{sol:15, temperature:t1, location:loc1}
+	var t interface {
+		talk() string
+	}
 
-	fmt.Printf("%+v\n", repo1)
-
-	fmt.Println("Average :=", repo1.temperature.average())
-	// to call average we need to repo1.temperature.average(), this is inconvienent
-	// it would be nice if we can call average just by repo1.average()
-	// we can do this by forwarding the call to the temperature type
-
-	repo := report{sol:15, temperature:t1, location:loc1}
-	fmt.Println("Average :=", repo.average()) // successfully forwarded
-
-	// name conflicts
-	repo2 := report2{sol:15, temperature:t1, location:loc1}
+	t = martial{}
+	fmt.Println(t.talk())
+	shout(t)
 	
-	// now we have two days methods, one from `sol` and one from `location`
-	// good news is we get the error only we if call the method
-	// fmt.Println(repo2.days()) // this will get ambigous selector error
-	
-	// parent structure method takes precedence over child structure method
-	fmt.Println(repo2.days())
+	t = laser(2)
+	fmt.Println(t.talk())
+	shout(t)
+	// Polymorphism achieved :)
 
-	// Inheritance vs Composition
-	/*
-	 Inheritance is a different way of thinking about designing software. With inheritance, a
-	 rover is a type of vehicle and thereby inherits the functionality that all vehicles share.
+	// Using interfaces with struct embedding
+	var starship struct{ laser }
+	starship.laser = 3 
+	//  Now the starship also satisfies the talker interface, 
+	// allowing it to be used with shout
+	shout(starship)
 
-	 With composition, a rover has an engine and wheels and various other parts that pro
-	 vide the functionality a rover needs. A truck may reuse several of those parts, but there
-	 is no vehicle type or hierarchy descending from it.
-	*/
+	// Any code can implement interfaces, even code that already exists (check obsidian)
+
+	// Interfaces provided by the standard library
+	// io.Reader, io.Writer, fmt.Stringer, json.Marshaler, json.Unmarshaler
+	// fmt.Stringer is used to print the value of a type
+	// json.Marshaler is used to convert a type to JSON
+	// json.Unmarshaler is used to convert JSON to a type
+	fmt.Println(martial{})
+
+	bytes, err := json.Marshal(martial{})
+	if err == nil {
+		fmt.Println(string(bytes))
+	} else {
+		fmt.Println(err)
+	}
 }
