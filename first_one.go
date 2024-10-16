@@ -1,94 +1,104 @@
-// nil
-// A pointer with nowhere to point has the value nil.
-// And the nil identifier is the zero value for slices, maps, and interfaces too.
+// reading directory, writing to file, handling errors
+// safeWriter (best practice)
 
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"sort"
-	// "log"
+	"io"
+	"log"
+	"os"
+	"strings"
 )
 
-type person struct {
-	age int
+// type celsius int <- declaring new type
+// type celsius = int <- Type Alias
+
+// safe way to write to file with minimal code :)
+type SafeWriter struct {
+	err error
+	w io.Writer
 }
 
-func (p *person) birthday() {
-	if p == nil {
-		// log.Fatal("nil pointer dereference") // is eqivalent to print followed by exit
-		fmt.Println("nil pointer dereference")
+func (sw *SafeWriter) WriteLn(text string) {
+	if sw.err != nil {
 		return
 	}
-	p.age++ // dereferencing a nil pointer will cause a panic
+
+	_, sw.err = fmt.Fprintln(sw.w, text)
 }
 
-func sortStrings(s []string, less func(i, j int) bool) {
-	if less == nil {
-		less = func(i, j int) bool {
-			return s[i] > s[j]
+func safeWritingToFile(path string, words []string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		fmt.Println("File could not be opened")
+		return err
+	}
+
+	defer file.Close()
+
+	sw := SafeWriter{w : file}
+	for _, word := range words {
+		sw.WriteLn(word)
+	}
+
+	return sw.err
+}
+
+func writingToFile(path string, words []string) error {
+	file, err := os.Create(path)
+	if err != nil {
+		fmt.Println("File could not be opened")
+		return err
+	}
+	
+	defer file.Close()
+	// Go ensures that all deferred actions take place before the containing function returns
+	// Even if some error occurs in future, file will closed, only then will be return
+	
+	for i, word := range words {
+		_, err := fmt.Fprintln(file, word)
+		if err != nil {
+			fmt.Println("Failed after ", i, "lines")
+			return err
 		}
 	}
-	sort.Slice(s, less)
+
+	return err
 }
 
 func main() {
-	var nobody *person
-	fmt.Printf("%T %[1]v\n", nobody)
-	nobody.birthday()
-
-	// nil function values
-	// zero value for a function type is nil
-	var f func(a, b int) int
-	fmt.Printf("%T %[1]v\n", f)
-	// f(2, 3) // panic: call of nil function
-
-	food := []string{"onion", "carrot", "celery"}
-	sortStrings(food, nil)
-	fmt.Println(food)
-
-	less := func(i, j int) bool {
-		return len(food[i]) > len(food[j])
+	files, err := os.ReadDir("./") // error type specially for errors :)
+	if err != nil {
+		log.Fatal(err)
 	}
 
-	sortStrings(food, less)
-	fmt.Println(food)
+	for _, info := range files {
+		fmt.Printf("%-20v %5v\n", info.Name(), info.IsDir())
+	}
 
-	// nil slices
-	// var first []string // nil slice
-	// var second []string = make([]string, 0) // empty slice
-	// var second = []string{} // empty slice
-
-	var soup []string
-	fmt.Println(soup == nil) // Prints true
-
-	for _, ingredient := range soup {
-		fmt.Println(ingredient)
+	proverbs := make([]string, 0, 13)
+	scanner := bufio.NewScanner(os.Stdin)
+	n := 13
+	for i := 0; i < n; i++ {
+		scanner.Scan()
+		if scanner.Err() == nil {
+			proverbs = append(proverbs, strings.Trim(scanner.Text(), " "))
+		}
 	}
 	
-	fmt.Println(len(soup), cap(soup)) // Prints 0 0
-	
-	soup = append(soup, "onion", "carrot", "celery")
-	fmt.Println(soup) // [onion carrot celery]
-	// Range, len, cap and append work with nil slices
-
-	// nil maps
-	var m map[string]int // nil map
-	// var m2 = make(map[string]int) // empty map
-
-	fmt.Println(m == nil) // Prints true
-	
-	if value, ok := m["first"]; ok {
-		fmt.Println(value)
+	for _, proverb := range proverbs {
+		fmt.Println(proverb)
 	}
-	// Writing to a nil map (soup["onion"] = 1) will panic with: assignment to entry in nil map
 
-	// nil interfaces
-	var v interface{}
-	fmt.Println(v == nil)
+	err = writingToFile("./proverbs.txt", proverbs)
+	if err == nil {
+		fmt.Println("Writing to file successful 1 : )")
+	}
 
-	var p *person
-	v = p
-	fmt.Printf("%T %[1]v %v\n", v, v == nil) // *main.person <nil> false
-	fmt.Printf("%#v\n", v) // (*main.person)(nil)
+	err = safeWritingToFile("./proverbs(Safe).txt", proverbs)
+	if err == nil {
+		fmt.Println("Writing to file successful 2 : )")
+	}
 }
