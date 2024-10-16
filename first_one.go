@@ -1,104 +1,121 @@
-// reading directory, writing to file, handling errors
-// safeWriter (best practice)
+// New errors, custom errors, panics and recover
 
 package main
 
 import (
-	"bufio"
+	"errors"
 	"fmt"
-	"io"
-	"log"
-	"os"
-	"strings"
 )
 
-// type celsius int <- declaring new type
-// type celsius = int <- Type Alias
+const rows, columns = 9, 9
+type grid [rows][columns]int8
 
-// safe way to write to file with minimal code :)
-type SafeWriter struct {
-	err error
-	w io.Writer
+func inBound(row, column int) bool {
+	if row < 0 || row >= rows || column < 0 || column >= columns {
+		return false
+	}
+	return true
 }
 
-func (sw *SafeWriter) WriteLn(text string) {
-	if sw.err != nil {
-		return
+func (g *grid) set1(row, column int, digit int8) error {
+	if !inBound(row, column) {
+		return errors.New("not in bounds")
 	}
 
-	_, sw.err = fmt.Fprintln(sw.w, text)
+	g[row][column] = digit
+	return nil
 }
 
-func safeWritingToFile(path string, words []string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		fmt.Println("File could not be opened")
-		return err
+// best practices
+var (
+	ErrBounds = errors.New("not in bounds")
+	ErrDigit = errors.New("invalid digit")
+)
+
+func validDigit(digit int8) bool {
+	if digit > rows || digit < 0 {
+		return false
 	}
-
-	defer file.Close()
-
-	sw := SafeWriter{w : file}
-	for _, word := range words {
-		sw.WriteLn(word)
-	}
-
-	return sw.err
+	return true
 }
 
-func writingToFile(path string, words []string) error {
-	file, err := os.Create(path)
-	if err != nil {
-		fmt.Println("File could not be opened")
-		return err
+func (g *grid) set2(row, column int, digit int8) error {
+	if !inBound(row, column) {
+		return ErrBounds
+	} else if !validDigit(digit) {
+		return ErrDigit
 	}
-	
-	defer file.Close()
-	// Go ensures that all deferred actions take place before the containing function returns
-	// Even if some error occurs in future, file will closed, only then will be return
-	
-	for i, word := range words {
-		_, err := fmt.Fprintln(file, word)
-		if err != nil {
-			fmt.Println("Failed after ", i, "lines")
-			return err
+
+	g[row][column] = digit
+	return nil
+}
+
+// custom error
+type SudokuError []error
+// to qualify as an `error` interface it needs to have an `Error() string` method
+func (s SudokuError) Error() string {
+	totalError := s[0].Error()
+	for i := 1; i < len(s); i++ {
+		totalError += ", " + s[i].Error()
+	}
+	return totalError
+}
+
+func (g *grid) set3(row, column int, digit int8) error {
+	var s SudokuError
+
+	if !inBound(row, column) || !validDigit(digit) {
+		if !inBound(row, column) {
+			s = append(s, ErrBounds)
 		}
+		if !validDigit(digit) {
+			s = append(s, ErrDigit)
+		}
+		return s
 	}
 
-	return err
+	g[row][column] = digit
+
+	// return s (if you return s, then we cannot equate it to `nil` as its an interface, even if the underlying slice is `nil`, interface will not be `nil`)
+	return nil
 }
+
 
 func main() {
-	files, err := os.ReadDir("./") // error type specially for errors :)
+	var sudoku grid
+	err := sudoku.set1(10, 0, 3)
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
-	for _, info := range files {
-		fmt.Printf("%-20v %5v\n", info.Name(), info.IsDir())
+	err = sudoku.set2(3, 3, -3)
+	if err != nil {
+		fmt.Println(err)
 	}
 
-	proverbs := make([]string, 0, 13)
-	scanner := bufio.NewScanner(os.Stdin)
-	n := 13
-	for i := 0; i < n; i++ {
-		scanner.Scan()
-		if scanner.Err() == nil {
-			proverbs = append(proverbs, strings.Trim(scanner.Text(), " "))
+	err = sudoku.set3(4, 4, 4)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	// type assertions
+	err = sudoku.set3(10, 10, 10)
+	if err != nil {
+		if errs, ok := err.(SudokuError); ok {
+			fmt.Printf("%v error(s) occured:\n", len(errs))
+			for index, error_i := range errs {
+				fmt.Println(index+1, ":", error_i)
+			}
 		}
 	}
-	
-	for _, proverb := range proverbs {
-		fmt.Println(proverb)
-	}
 
-	err = writingToFile("./proverbs.txt", proverbs)
-	if err == nil {
-		fmt.Println("Writing to file successful 1 : )")
-	}
+	// panic and recover
+	defer func() {
+		if e := recover(); e != nil {
+			fmt.Println(e) // prints "Program crashed T_T"
+		}
+	}() // only deferred functions can make use of `recover`
+	// `panic` is often better than `os.Exit` in that `panic` will run any deferred functions, whereas `os.Exit` does not.
 
-	err = safeWritingToFile("./proverbs(Safe).txt", proverbs)
-	if err == nil {
-		fmt.Println("Writing to file successful 2 : )")
-	}
+	panic("Program crashed T_T")
 }
