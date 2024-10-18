@@ -1,40 +1,62 @@
 // Concurrency
-// Select statement
+// Pipelines
 
 package main
 
 import (
 	"fmt"
-	"math/rand"
-	"time"
+	"strings"
 )
 
-func sleepyGopher(id int, c chan int) {
-	time.Sleep(time.Duration(rand.Intn(1500)) * (time.Millisecond))
-	c <- id
+func sourceGopher(downstream chan string) {
+	for _, v := range []string{"hello world", "a bad apple", "goodbye all"} {
+		downstream <- v
+		fmt.Println(v, "sent on c0",)
+	}
+	close(downstream)
+	fmt.Println("c0 Closed")
 }
 
-func main() {
-	timeout := time.After(1 * time.Second)
-	c := make(chan int)
-
-	for i := 0; i < 5; i++ {
-		go sleepyGopher(i, c)
-	}
-
-	for i := 0; i < 5; i++ {
-		select {
-		case gopherId := <- c:
-			fmt.Println("GopherId :",gopherId)
-		case <- timeout:
-			fmt.Println("Timeout")
+func filterGopherv1(upstream, downstream chan string) {
+	for {
+		item, ok := <- upstream
+		if !ok {
+			close(downstream)
+			fmt.Println("c1 closed")
 			return
+		}
+		fmt.Println(item, "received on c0")
+
+		if !strings.Contains(item, "bad") {
+			downstream <- item
+			fmt.Println(item, "sent on c1")
 		}
 	}
 }
-/*
-`time.After()` starts its timer when its called, then it
-sends the current time on the channel, if time expires
-by the time we reach the reciever, then we can just immidiately
-read, thus it is advisable to use `After()` before the operation
-*/
+// `filerGopher` can be refactored
+
+func filterGopherv2(upstream, downstream chan string) {
+	for item := range upstream {
+		fmt.Println(item, "received on c0")
+		if !strings.Contains(item, "bad") {
+			downstream <- item
+			fmt.Println(item, "sent on c1")
+		}
+	}
+
+	close(downstream)
+	fmt.Println("c1 closed")
+}
+
+func printGopher(upstream chan string) {
+	for item := range upstream {
+		fmt.Println(item)
+	}
+}
+
+func main() {
+	c0, c1 := make(chan string), make(chan string)
+	go sourceGopher(c0)
+	go filterGopherv1(c0, c1)
+	printGopher(c1)
+}
