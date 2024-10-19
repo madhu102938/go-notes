@@ -1,62 +1,29 @@
-// Concurrency
-// Pipelines
+// stacks, queues
+// 1. Run `go get github.com/golang-collections/collections`
+// Then run the code below
 
 package main
 
 import (
 	"fmt"
-	"strings"
+	"github.com/golang-collections/collections/stack"
+	"github.com/golang-collections/collections/queue"
 )
 
-func sourceGopher(downstream chan string) {
-	for _, v := range []string{"hello world", "a bad apple", "goodbye all"} {
-		downstream <- v
-		fmt.Println(v, "sent on c0",)
-	}
-	close(downstream)
-	fmt.Println("c0 Closed")
-}
-
-func filterGopherv1(upstream, downstream chan string) {
-	for {
-		item, ok := <- upstream
-		if !ok {
-			close(downstream)
-			fmt.Println("c1 closed")
-			return
-		}
-		fmt.Println(item, "received on c0")
-
-		if !strings.Contains(item, "bad") {
-			downstream <- item
-			fmt.Println(item, "sent on c1")
-		}
-	}
-}
-// `filerGopher` can be refactored
-
-func filterGopherv2(upstream, downstream chan string) {
-	for item := range upstream {
-		fmt.Println(item, "received on c0")
-		if !strings.Contains(item, "bad") {
-			downstream <- item
-			fmt.Println(item, "sent on c1")
-		}
-	}
-
-	close(downstream)
-	fmt.Println("c1 closed")
-}
-
-func printGopher(upstream chan string) {
-	for item := range upstream {
-		fmt.Println(item)
-	}
-}
-
 func main() {
-	c0, c1 := make(chan string), make(chan string)
-	go sourceGopher(c0)
-	go filterGopherv1(c0, c1)
-	printGopher(c1)
+	s := stack.New()
+	s.Push(1)
+	s.Push(2)
+	s.Push(3)
+	fmt.Println(s.Pop())
+	fmt.Println(s.Pop())
+	fmt.Println(s.Pop())
+
+	q := queue.New()
+	q.Enqueue(1)
+	q.Enqueue(2)
+	q.Enqueue(3)
+	fmt.Println(q.Dequeue())
+	fmt.Println(q.Dequeue())
+	fmt.Println(q.Dequeue())
 }
