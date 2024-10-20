@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 )
 
 func main() {
@@ -26,11 +27,26 @@ func main() {
 	log.Fatal(err)
 }
 
+var count int = 0
 func CreateHandler(w http.ResponseWriter, r *http.Request) {
+	defer func() {
+		count++;
+	}()
+
 	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
-		w.WriteHeader(405)
-		w.Write([]byte("Method not allowed"))
+		if count == 0 {
+			w.Header().Set("allow-hehe", http.MethodPost)
+		}
+		if count == 1 {
+			w.Header().Add("Allow", "hehe")
+		}
+		// fmt.Println(w.Header().Get("Allow"))
+		if count > 2 {
+			w.Header().Del("Allow")
+		}
+		// w.WriteHeader(405)
+		// w.Write([]byte("Method not allowed"))
+		http.Error(w, "method not allowed", 405)
 		return
 	}
 
@@ -38,7 +54,16 @@ func CreateHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func SnippetHandler(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Display a snippet"))
+	// w.Write([]byte("Display a snippet"))
+	// receiving arguements
+	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	if err != nil || id < 1 {
+		fmt.Fprintln(w, "not a valid id")
+		return
+	}
+
+	fmt.Fprintf(w, "Displaying a specific snippet with ID %v\n", id)
+	// writing to response writer with fprintf
 }
 
 func MainHandler(w http.ResponseWriter, r *http.Request) {
