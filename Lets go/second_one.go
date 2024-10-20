@@ -27,6 +27,13 @@ func main() {
 }
 
 func CreateHandler(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		w.Header().Set("Allow", http.MethodPost)
+		w.WriteHeader(405)
+		w.Write([]byte("Method not allowed"))
+		return
+	}
+
 	w.Write([]byte("create a new snippet"))
 }
 
