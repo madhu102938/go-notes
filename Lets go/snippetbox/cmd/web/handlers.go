@@ -8,27 +8,14 @@ import (
 	"path/filepath"
 )
 
-var count int = 0
 func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
-	defer func() {
-		count++;
-	}()
-
 	if r.Method != http.MethodPost {
-		if count == 0 {
-			w.Header().Set("allow-hehe", http.MethodPost)
-			// it will automatically change to `Allow-Hehe`
-		}
-		if count == 1 {
-			w.Header().Add("Allow", "hehe")
-		}
-		// fmt.Println(w.Header().Get("Allow"))
-		if count > 2 {
-			w.Header().Del("Allow")
-		}
+		w.Header().Set("Allow", http.MethodPost)
+
 		// w.WriteHeader(405)
 		// w.Write([]byte("Method not allowed"))
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		// http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		app.clientError(w, http.StatusMethodNotAllowed)
 		return
 	}
 
@@ -40,7 +27,8 @@ func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 	// receiving arguements
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
 	if err != nil || id < 1 {
-		fmt.Fprintln(w, "not a valid id")
+		// fmt.Fprintln(w, "not a valid id")
+		app.notFound(w)
 		return
 	}
 
@@ -51,7 +39,8 @@ func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 	// if the path is not the root path, then return a 404
 	if r.URL.Path != "/" {
-		http.NotFound(w, r)
+		// http.NotFound(w, r)
+		app.notFound(w)
 		return
 	}
 
@@ -65,15 +54,17 @@ func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		app.errorLog.Println(err.Error())
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		// app.errorLog.Println(err.Error())
+		// http.Error(w, "internal server error", http.StatusInternalServerError)
+		app.serverError(w, err)
 		return
 	}
 
 	err = ts.Execute(w, nil)
 	if err != nil {
-		app.errorLog.Println(err.Error())
-		http.Error(w, "internal server error", http.StatusInternalServerError)
+		// app.errorLog.Println(err.Error())
+		// http.Error(w, "internal server error", http.StatusInternalServerError)
+		app.serverError(w, err)
 	}
 }
 
