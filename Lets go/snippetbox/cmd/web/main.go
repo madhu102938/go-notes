@@ -6,14 +6,15 @@ import (
 	"flag"
 	"log"
 	"net/http"
+	"os"
 )
 
 func main() {
+	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
+	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+
 	addr := flag.String("addr", ":8080", "HTTP network address")
-	/* we can also use
-	var addr *string = new(string)  // new(Type) returns pointer to Type, allocates memory
-	flag.StringVar(addr, "addr", ":8080", "HTTP network address")
-	*/
 
 	//  You need to call this *before* you use the addr variable
     // otherwise it will always contain the default value of ":4000". If any errors are
@@ -36,10 +37,10 @@ func main() {
 	mux.HandleFunc("/download/", DownloadHandler)
 	
 	// `addr` is pointer to string, thus we need to dereference it
-	log.Println("Server started on", *addr)
+	infoLog.Println("Server started on", *addr)
 	
 	// by default, localhost is used
 	err := http.ListenAndServe(*addr, mux)
-	log.Fatal(err)
+	errorLog.Fatal(err)
 }
 
