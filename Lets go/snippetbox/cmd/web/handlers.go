@@ -3,14 +3,13 @@ package main
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"strconv"
 	"path/filepath"
 )
 
 var count int = 0
-func CreateHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
 	defer func() {
 		count++;
 	}()
@@ -29,14 +28,14 @@ func CreateHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		// w.WriteHeader(405)
 		// w.Write([]byte("Method not allowed"))
-		http.Error(w, "method not allowed", 405)
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
 	w.Write([]byte("create a new snippet"))
 }
 
-func SnippetHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 	// w.Write([]byte("Display a snippet"))
 	// receiving arguements
 	id, err := strconv.Atoi(r.URL.Query().Get("id"))
@@ -49,7 +48,7 @@ func SnippetHandler(w http.ResponseWriter, r *http.Request) {
 	// writing to response writer with fprintf
 }
 
-func MainHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 	// if the path is not the root path, then return a 404
 	if r.URL.Path != "/" {
 		http.NotFound(w, r)
@@ -66,19 +65,19 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	ts, err := template.ParseFiles(files...)
 	if err != nil {
-		log.Println(err.Error())
-		http.NotFound(w, r)
+		app.errorLog.Println(err.Error())
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	err = ts.Execute(w, nil)
 	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "internal server error", 500)
+		app.errorLog.Println(err.Error())
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 	}
 }
 
-func DownloadHandler(w http.ResponseWriter, r *http.Request) {
+func (app *application)DownloadHandler(w http.ResponseWriter, r *http.Request) {
     filePath := filepath.Join(".", "ui", "static", "img", "logo.png")
 	http.ServeFile(w, r, filePath)
 }

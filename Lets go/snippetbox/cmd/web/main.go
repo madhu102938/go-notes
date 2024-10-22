@@ -9,9 +9,22 @@ import (
 	"os"
 )
 
+ // Define an application struct to hold the application-wide dependencies for the
+ // web application. For now we'll only include fields for the two custom loggers, but
+ // we'll add more to it as the build progresses.
+ type application struct {
+	infoLog *log.Logger
+	errorLog *log.Logger
+ }
+
 func main() {
 	infoLog := log.New(os.Stdout, "INFO\t", log.Ldate|log.Ltime)
 	errorLog := log.New(os.Stderr, "ERROR\t", log.Ldate|log.Ltime|log.Lshortfile)
+
+	app := &application{
+		infoLog: infoLog,
+		errorLog: errorLog,
+	}
 
 
 	addr := flag.String("addr", ":8080", "HTTP network address")
@@ -25,16 +38,16 @@ func main() {
 	mux := http.NewServeMux()
 
 	// subtree path
-	mux.HandleFunc("/", MainHandler)
+	mux.HandleFunc("/", app.MainHandler)
 	// fixed path
-	mux.HandleFunc("/snippet", SnippetHandler)
+	mux.HandleFunc("/snippet", app.SnippetHandler)
 	// fixed path
-	mux.HandleFunc("/snippet/create", CreateHandler)
+	mux.HandleFunc("/snippet/create", app.CreateHandler)
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
-	mux.HandleFunc("/download/", DownloadHandler)
+	mux.HandleFunc("/download/", app.DownloadHandler)
 
 	srv := &http.Server{
 		Addr:*addr,
