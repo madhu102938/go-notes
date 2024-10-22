@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"strconv"
+	"path/filepath"
 )
 
 var count int = 0
@@ -60,6 +61,7 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 	files := []string{
 		"./ui/html/home.page.tmpl",
 		"./ui/html/base.layout.tmpl",
+		"./ui/html/footer.partial.tmpl",
 	}
 
 	ts, err := template.ParseFiles(files...)
@@ -74,4 +76,9 @@ func MainHandler(w http.ResponseWriter, r *http.Request) {
 		log.Println(err.Error())
 		http.Error(w, "internal server error", 500)
 	}
+}
+
+func DownloadHandler(w http.ResponseWriter, r *http.Request) {
+    filePath := filepath.Join(".", "ui", "static", "img", "logo.png")
+	http.ServeFile(w, r, filePath)
 }

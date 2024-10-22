@@ -18,6 +18,11 @@ func main() {
 	mux.HandleFunc("/snippet", SnippetHandler)
 	// fixed path
 	mux.HandleFunc("/snippet/create", CreateHandler)
+
+	fileServer := http.FileServer(http.Dir("./ui/static/"))
+	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
+
+	mux.HandleFunc("/download/", DownloadHandler)
 	
 	fmt.Println("Server started on 8080")
 	
