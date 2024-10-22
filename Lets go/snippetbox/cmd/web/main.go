@@ -35,12 +35,18 @@ func main() {
 	mux.Handle("/static/", http.StripPrefix("/static", fileServer))
 
 	mux.HandleFunc("/download/", DownloadHandler)
+
+	srv := &http.Server{
+		Addr:*addr,
+		Handler: mux,
+		ErrorLog: errorLog,
+	}
 	
 	// `addr` is pointer to string, thus we need to dereference it
 	infoLog.Println("Server started on", *addr)
 	
 	// by default, localhost is used
-	err := http.ListenAndServe(*addr, mux)
+	err := srv.ListenAndServe()
 	errorLog.Fatal(err)
 }
 
