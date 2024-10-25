@@ -1,11 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
-	"html/template"
+	// "html/template"
 	"net/http"
-	"strconv"
 	"path/filepath"
+	"snippetbox/pkg/models"
+	"strconv"
 )
 
 func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +21,20 @@ func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	w.Write([]byte("create a new snippet"))
+	title := "O snail"
+    content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
+    expires := "7"
+
+	lastId, err := app.snippets.Insert(title, content, expires)
+	
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	// Redirect the user to the relevant page for the snippet.
+	redirectURL := fmt.Sprintf("/snippet?id=%d", lastId)
+	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 
 func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
@@ -32,8 +47,18 @@ func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	fmt.Fprintf(w, "Displaying a specific snippet with ID %v\n", id)
-	// writing to response writer with fprintf
+	record, err := app.snippets.Get(id)
+	
+	if err != nil {
+		if errors.Is(err, models.ErrNoRecord) {
+			app.notFound(w)
+		} else {
+			app.serverError(w, err)
+		}
+		return
+	}
+	
+	fmt.Fprintln(w, record)
 }
 
 func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
@@ -46,25 +71,35 @@ func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 
 	// // Initialize a slice containing the paths to the two files. Note that the
     // home.page.tmpl file must be the *first* file in the slice.
-	files := []string{
-		"./ui/html/home.page.tmpl",
-		"./ui/html/base.layout.tmpl",
-		"./ui/html/footer.partial.tmpl",
-	}
+	// files := []string{
+	// 	"./ui/html/home.page.tmpl",
+	// 	"./ui/html/base.layout.tmpl",
+	// 	"./ui/html/footer.partial.tmpl",
+	// }
 
-	ts, err := template.ParseFiles(files...)
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	// app.errorLog.Println(err.Error())
+	// 	// http.Error(w, "internal server error", http.StatusInternalServerError)
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+
+	// err = ts.Execute(w, nil)
+	// if err != nil {
+	// 	// app.errorLog.Println(err.Error())
+	// 	// http.Error(w, "internal server error", http.StatusInternalServerError)
+	// 	app.serverError(w, err)
+	// }
+
+	latest, err := app.snippets.Latest()
 	if err != nil {
-		// app.errorLog.Println(err.Error())
-		// http.Error(w, "internal server error", http.StatusInternalServerError)
 		app.serverError(w, err)
 		return
 	}
 
-	err = ts.Execute(w, nil)
-	if err != nil {
-		// app.errorLog.Println(err.Error())
-		// http.Error(w, "internal server error", http.StatusInternalServerError)
-		app.serverError(w, err)
+	for _, latest_iter := range latest {
+		fmt.Fprintf(w, "%v\n", latest_iter)
 	}
 }
 
