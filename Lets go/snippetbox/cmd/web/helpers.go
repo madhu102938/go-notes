@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"runtime/debug"
@@ -21,4 +22,34 @@ func (app *application) clientError(w http.ResponseWriter, status int) {
 
 func (app *application) notFound(w http.ResponseWriter) {
 	http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+}
+
+func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
+	
+	app.addDefaultData(td, r)
+
+	ts, ok := app.templateCache[name]
+	if !ok {
+		app.serverError(w, fmt.Errorf("the template %s doesn't exist", name))
+	}
+
+	buf := new(bytes.Buffer)
+
+	// Write the template to the buffer, instead of straight to the
+    // http.ResponseWriter. If there's an error, call our serverError helper and then
+    // return.
+	err := ts.Execute(buf, td)
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	_, err = buf.WriteTo(w)
+	if err != nil {
+		app.serverError(w, err)
+	}
+}
+
+func (app *application) addDefaultData(td *templateData, r *http.Request) {
+	td.CurrentYear = 2024
 }

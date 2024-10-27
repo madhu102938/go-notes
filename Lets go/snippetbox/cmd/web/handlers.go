@@ -57,8 +57,26 @@ func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 		}
 		return
 	}
+
+	data := &templateData{Snippet: record}
 	
-	fmt.Fprintln(w, record)
+	// files := []string{
+	// 	"./ui/html/show.page.tmpl",
+	// 	"./ui/html/base.layout.tmpl",
+	// 	"./ui/html/footer.partial.tmpl",
+	// }
+
+	// ts, err := template.ParseFiles(files...)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// 	return
+	// }
+
+	// err = ts.Execute(w, data)
+	// if err != nil {
+	// 	app.serverError(w, err)
+	// }
+	app.render(w, r, "show.page.tmpl", data)
 }
 
 func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
@@ -69,8 +87,16 @@ func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	latest, err := app.snippets.Latest()
+	if err != nil {
+		app.serverError(w, err)
+		return
+	}
+
+	data := &templateData{Snippets: latest}
+
 	// // Initialize a slice containing the paths to the two files. Note that the
-    // home.page.tmpl file must be the *first* file in the slice.
+    // // home.page.tmpl file must be the *first* file in the slice.
 	// files := []string{
 	// 	"./ui/html/home.page.tmpl",
 	// 	"./ui/html/base.layout.tmpl",
@@ -85,22 +111,15 @@ func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 	// 	return
 	// }
 
-	// err = ts.Execute(w, nil)
+	// err = ts.Execute(w, data)
 	// if err != nil {
 	// 	// app.errorLog.Println(err.Error())
 	// 	// http.Error(w, "internal server error", http.StatusInternalServerError)
 	// 	app.serverError(w, err)
 	// }
+	app.render(w, r, "home.page.tmpl", data)
 
-	latest, err := app.snippets.Latest()
-	if err != nil {
-		app.serverError(w, err)
-		return
-	}
 
-	for _, latest_iter := range latest {
-		fmt.Fprintf(w, "%v\n", latest_iter)
-	}
 }
 
 func (app *application)DownloadHandler(w http.ResponseWriter, r *http.Request) {
