@@ -42,7 +42,7 @@ func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
 func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 	// w.Write([]byte("Display a snippet"))
 	// receiving arguements
-	id, err := strconv.Atoi(r.URL.Query().Get("id"))
+	id, err := strconv.Atoi(r.URL.Query().Get(":id"))
 	if err != nil || id < 1 {
 		// fmt.Fprintln(w, "not a valid id")
 		app.notFound(w)
