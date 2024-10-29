@@ -5,9 +5,11 @@ import (
 	"fmt"
 	// "html/template"
 	"net/http"
-	"path/filepath"
-	"snippetbox/pkg/models"
+	// "path/filepath"
 	"strconv"
+	
+	"snippetbox/pkg/models"
+
 )
 
 func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
@@ -87,6 +89,8 @@ func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// panic("oops! something went wrong")  // Deliberate panic
+
 	latest, err := app.snippets.Latest()
 	if err != nil {
 		app.serverError(w, err)
@@ -120,9 +124,4 @@ func (app *application)MainHandler(w http.ResponseWriter, r *http.Request) {
 	app.render(w, r, "home.page.tmpl", data)
 
 
-}
-
-func (app *application)DownloadHandler(w http.ResponseWriter, r *http.Request) {
-    filePath := filepath.Join(".", "ui", "static", "img", "logo.png")
-	http.ServeFile(w, r, filePath)
 }
