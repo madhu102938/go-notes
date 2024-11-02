@@ -35,10 +35,6 @@ func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
 		app.clientError(w, http.StatusBadRequest)
 		return
 	}
-	
-	title := r.PostForm.Get("title")
-	content := r.PostForm.Get("content")
-	expires := r.PostForm.Get("expires")
 
 	form := forms.New(r.PostForm)
 	form.Required("title", "content", "expires")
@@ -51,12 +47,14 @@ func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	lastId, err := app.snippets.Insert(title, content, expires)
+	lastId, err := app.snippets.Insert(form.Get("title"), form.Get("content"), form.Get("expires"))
 	
 	if err != nil {
 		app.serverError(w, err)
 		return
 	}
+
+	app.session.Put(r, "flash", "Snippet successfully created!")
 
 	// Redirect the user to the relevant page for the snippet.
 	redirectURL := fmt.Sprintf("/snippet/%d", lastId)
@@ -84,7 +82,9 @@ func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	data := &templateData{Snippet: record}
+	flash := app.session.PopString(r, "flash")
+
+	data := &templateData{Snippet: record, Flash: flash}
 	
 	// files := []string{
 	// 	"./ui/html/show.page.tmpl",

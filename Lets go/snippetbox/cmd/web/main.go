@@ -3,26 +3,29 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
+	"html/template"
 	"log"
 	"net/http"
 	"os"
-	"database/sql"
-	"html/template"
-	
-	"snippetbox/pkg/models/mysql"
-	
+	"time"
+
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/golangcollege/sessions"
+
+	"snippetbox/pkg/models/mysql"
 )
 
- // Define an application struct to hold the application-wide dependencies for the
- // web application. For now we'll only include fields for the two custom loggers, but
- // we'll add more to it as the build progresses.
+// Define an application struct to hold the application-wide dependencies for the
+// web application. For now we'll only include fields for the two custom loggers, but
+// we'll add more to it as the build progresses.
  type application struct {
 	infoLog			*log.Logger
 	errorLog		*log.Logger
 	snippets		*mysql.SnippetModel
 	templateCache	map[string]*template.Template
+	session			*sessions.Session
  }
 
 func main() {
@@ -33,6 +36,7 @@ func main() {
 	// Commandline arguments
 	addr := flag.String("addr", ":8080", "HTTP network address")
 	dsn := flag.String("dsn", "web:snipass@/snippetbox?parseTime=true", "MySQL data source name")
+	secret := flag.String("secret", "s6Ndh+pPbnzHbS*+9Pk8qGWhTzbpa@ge", "Secret Key")
 
 	//  You need to call this *before* you use the addr variable
     // otherwise it will always contain the default value of ":4000". If any errors are
@@ -53,11 +57,15 @@ func main() {
 		errorLog.Fatal(err)
 	}
 
+	session := sessions.New([]byte(*secret))
+	session.Lifetime = 12 * time.Hour
+
 	app := &application{
-		infoLog: infoLog,
-		errorLog: errorLog,
-		snippets: &mysql.SnippetModel{DB:db},
-		templateCache: templateCache,
+		infoLog:		infoLog,
+		errorLog: 		errorLog,
+		snippets: 		&mysql.SnippetModel{DB:db},
+		templateCache: 	templateCache,
+		session: 		session,
 	}
 
 	srv := &http.Server{
