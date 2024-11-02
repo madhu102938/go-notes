@@ -82,9 +82,7 @@ func (app *application)SnippetHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	flash := app.session.PopString(r, "flash")
-
-	data := &templateData{Snippet: record, Flash: flash}
+	data := &templateData{Snippet: record}
 	
 	// files := []string{
 	// 	"./ui/html/show.page.tmpl",
