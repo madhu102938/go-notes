@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"time"
+	"crypto/tls"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/golangcollege/sessions"
@@ -60,6 +61,7 @@ func main() {
 	session := sessions.New([]byte(*secret))
 	session.Lifetime = 12 * time.Hour
 
+	
 	app := &application{
 		infoLog:		infoLog,
 		errorLog: 		errorLog,
@@ -68,17 +70,27 @@ func main() {
 		session: 		session,
 	}
 
+	tlsConflig := &tls.Config{
+		PreferServerCipherSuites: 	true,
+		CurvePreferences:			[]tls.CurveID{tls.X25519, tls.CurveP256},
+	}
+	
 	srv := &http.Server{
 		Addr:*addr,
 		Handler: app.routes(),
 		ErrorLog: errorLog,
+		TLSConfig: tlsConflig,
+		IdleTimeout: time.Minute,
+		ReadTimeout: 5 * time.Second,
+		WriteTimeout: 10 * time.Second,
 	}
 	
 	// `addr` is pointer to string, thus we need to dereference it
 	infoLog.Println("Server started on", *addr)
 	
 	// by default, localhost is used
-	err = srv.ListenAndServe()
+	// err = srv.ListenAndServe()
+	err = srv.ListenAndServeTLS("./tls/cert.pem", "./tls/key.pem")
 	errorLog.Fatal(err)
 }
 

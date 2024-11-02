@@ -1,0 +1,5 @@
+# ignoring all .pem files
+*.pem
+
+# all files inside tls directory
+tls/
