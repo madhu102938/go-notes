@@ -7,25 +7,49 @@ import (
 	"net/http"
 	// "path/filepath"
 	"strconv"
-	
+
 	"snippetbox/pkg/models"
+	"snippetbox/pkg/forms"
 
 )
 
-func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		w.Header().Set("Allow", http.MethodPost)
+func (app *application)CreateSnippetForm(w http.ResponseWriter, r *http.Request) {
+	app.render(w, r, "create.page.tmpl", &templateData{
+		Form: forms.New(nil),
+	})
+}
 
-		// w.WriteHeader(405)
-		// w.Write([]byte("Method not allowed"))
-		// http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		app.clientError(w, http.StatusMethodNotAllowed)
+func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
+	// if r.Method != http.MethodPost {
+	// 	w.Header().Set("Allow", http.MethodPost)
+
+	// 	// w.WriteHeader(405)
+	// 	// w.Write([]byte("Method not allowed"))
+	// 	// http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	// 	app.clientError(w, http.StatusMethodNotAllowed)
+	// 	return
+	// }
+
+	err := r.ParseForm()
+	if err != nil {
+		app.clientError(w, http.StatusBadRequest)
 		return
 	}
+	
+	title := r.PostForm.Get("title")
+	content := r.PostForm.Get("content")
+	expires := r.PostForm.Get("expires")
 
-	title := "O snail"
-    content := "O snail\nClimb Mount Fuji,\nBut slowly, slowly!\n\n– Kobayashi Issa"
-    expires := "7"
+	form := forms.New(r.PostForm)
+	form.Required("title", "content", "expires")
+	form.MaxLength("title", 100)
+	expiresPermittedValues := []string{"1", "7", "30", "365"}
+	form.PermittedValues("expires", expiresPermittedValues...)
+
+	if !form.Valid() {
+		app.render(w, r, "create.page.tmpl", &templateData{Form: form})
+		return
+	}
 
 	lastId, err := app.snippets.Insert(title, content, expires)
 	
@@ -35,7 +59,7 @@ func (app *application)CreateHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Redirect the user to the relevant page for the snippet.
-	redirectURL := fmt.Sprintf("/snippet?id=%d", lastId)
+	redirectURL := fmt.Sprintf("/snippet/%d", lastId)
 	http.Redirect(w, r, redirectURL, http.StatusSeeOther)
 }
 

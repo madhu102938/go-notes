@@ -13,8 +13,8 @@ func (app *application) routes() http.Handler {
 
 	// subtree path (no wildcard here)
 	mux.Get("/", http.HandlerFunc(app.MainHandler)) // exception, only works for '/' and nothing else
-	// mux.Post("/snippet/create", http.HandlerFunc(app.CreateSnippetForm))
-	mux.Get("/snippet/create", http.HandlerFunc(app.CreateHandler))
+	mux.Post("/snippet/create", http.HandlerFunc(app.CreateHandler))
+	mux.Get("/snippet/create", http.HandlerFunc(app.CreateSnippetForm))
 	mux.Get("/snippet/:id", http.HandlerFunc(app.SnippetHandler))	// `:id` Moved down
 
 	fileServer := http.FileServer(http.Dir("./ui/static/"))

@@ -1,59 +1,72 @@
 package main
 
-import (
-    "sort"
-    "fmt"
-	// "math"
-)
+import "fmt"
 
-type myType []int
-
-func (m myType) Less(i, j int) bool {
-    return m[i] < m[j]
-}
-
-func (m myType) Len() int {
-    return len(m)
-}
-
-func (m myType) Swap(i, j int) {
-    m[j], m[i] = m[i], m[j]
-}
-
-func condition(num int) bool {
-	return int64(num) * int64(num) > int64(1e5)
-}
-
-func longestSquareStreak(nums []int) int {
-    sort.Sort(myType(nums))
-	var ans int
-	max := func(a, b int) int {
-		if a >= b {
-			return a
+func create2DSlice[T comparable](n, m int, x T) [][]T {
+	dp := make([][]T, n)
+	for i := range dp {
+		dp[i] = make([]T, m)
+		for j := range dp[i] {
+			dp[i][j] = x
 		}
-		return b
+	}
+
+	return dp
+}
+
+func max[T int | float32 | float64] (a T, b T) T {
+	if a >= b {
+		return a
+	}
+	return b
+}
+
+func actualAnswer(i, j int, grid, dp [][]int) int {
+	if (i == len(grid)-1) {
+		return 0
+	}
+
+	if dp[i][j] != -1 {
+		return dp[i][j]
+	}
+
+	idx := []int{-1, 1, 0, 0}
+	idy := []int{0, 0, -1, 1}
+	ans, moves := 0, 0
+
+	for k := 0; k < 4; k++ {
+		newi, newj := i + idx[k], j + idy[k]
+		if (newi >= 0 && newj >= 0 && newi < len(grid) && newj < len(grid[0]) && grid[i][j] < grid[newi][newj]) {
+			moves = max(actualAnswer(newi, newj, grid, dp) + 1, moves)
+			
+			if (newi == len(grid[0])-1) {
+				ans = moves
+			}
+
+			// ans = max(ans, moves)
+			// if ans != 0 {
+			// 	fmt.Println(ans, i, j, newi, newj, grid[i][j], grid[newi][newj])
+			// }
+		}
+	}
+
+	dp[i][j] = ans
+	return ans
+}
+
+func maxMoves(grid [][]int) int {
+	n, m := len(grid), len(grid[0])
+	dp := create2DSlice(n, m, -1)
+
+	ans := 0
+	for i := 0; i < n; i++ {
+		ans = max(ans, actualAnswer(i, 0, grid, dp))
 	}
 	
-	mp := make(map[int]bool)
-	for _, j := range nums {
-		mp[j] = true
-	}
-
-	for _, num := range nums {
-
-		temp := 1
-		toFind := num
-		for !condition(toFind) && mp[toFind * toFind] {
-			temp++
-			ans = max(temp, ans)
-			toFind = toFind * toFind
-		}
-	}
-
 	return ans
 }
 
 func main() {
-	nums := []int{4,3,6,16,8,2}
-	fmt.Println(longestSquareStreak(nums))
+	grid := [][]int{{3,2,4},{2,1,9},{1,1,7}}
+	fmt.Println(maxMoves(grid))
 }

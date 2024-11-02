@@ -25,8 +25,7 @@ func (app *application) notFound(w http.ResponseWriter) {
 }
 
 func (app *application) render(w http.ResponseWriter, r *http.Request, name string, td *templateData) {
-	
-	app.addDefaultData(td, r)
+	td = app.addDefaultData(td, r)
 
 	ts, ok := app.templateCache[name]
 	if !ok {
@@ -50,6 +49,10 @@ func (app *application) render(w http.ResponseWriter, r *http.Request, name stri
 	}
 }
 
-func (app *application) addDefaultData(td *templateData, r *http.Request) {
+func (app *application) addDefaultData(td *templateData, r *http.Request) *templateData {
+	if td == nil {
+		td = &templateData{}
+	}
 	td.CurrentYear = 2024
+	return td
 }
