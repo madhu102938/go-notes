@@ -1,0 +1,26 @@
+{{template "base" .}}
+
+{{define "title"}}Login{{end}}
+
+{{define "main"}}
+    <form action="/user/login" method="post" novalidate>            
+        <!-- We should add CSRF token at the start of a form -->
+        <input type="hidden" name="csrf_token" value="{{.CSRFToken}}">
+        {{with .Form}}
+            <div>
+                <label>Email</label>
+                {{with .Errors.Get "generic"}}
+                    <div class="error">{{.}}</div>
+                {{end}}
+                <input type="email" name="email" value='{{.Get "email"}}'>
+            </div>
+            <div>
+                <label>Password</label>
+                <input type="password" name="password">
+            </div>
+            <div>
+                <input type="submit" value="Login">
+            </div>
+        {{end}}
+    </form>
+{{end}}
